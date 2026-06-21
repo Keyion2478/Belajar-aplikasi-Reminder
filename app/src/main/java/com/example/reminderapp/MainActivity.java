@@ -1,0 +1,190 @@
+package com.example.reminderapp;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.MenuItem;
+
+import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.navigation.NavigationView;
+
+import java.util.ArrayList;
+
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+
+    RecyclerView recyclerView;
+    FloatingActionButton btnAdd;
+    DrawerLayout drawerLayout;
+    NavigationView navigationView;
+    Toolbar toolbar;
+
+    DBHelper dbHelper;
+    SessionManager session;
+    ReminderAdapter adapter;
+    ArrayList<Reminder> reminderList;
+
+    public static final int REQUEST_ADD = 1;
+    public static final int REQUEST_EDIT = 2;
+
+    String currentCategory = "All";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        session = new SessionManager(this);
+        if (!session.isLoggedIn()) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
+
+        toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        drawerLayout = findViewById(R.id.drawer_layout);
+        navigationView = findViewById(R.id.nav_view);
+        recyclerView = findViewById(R.id.recyclerView);
+        btnAdd = findViewById(R.id.btnAdd);
+
+        navigationView.setNavigationItemSelectedListener(this);
+
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawerLayout, toolbar,
+                R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawerLayout.addDrawerListener(toggle);
+        toggle.syncState();
+
+        dbHelper = new DBHelper(this);
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        if (savedInstanceState == null) {
+            navigationView.setCheckedItem(R.id.nav_all);
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setTitle("Semua Pengingat");
+            }
+            loadData();
+        }
+
+        btnAdd.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, AddEditReminderActivity.class);
+            startActivityForResult(intent, REQUEST_ADD);
+        });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.nav_logout) {
+            session.logout();
+            startActivity(new Intent(MainActivity.this, LoginActivity.class));
+            finish();
+            return true;
+        }
+
+        if (id == R.id.nav_all) {
+            currentCategory = "All";
+        } else if (id == R.id.nav_personal) {
+            currentCategory = "Pribadi";
+        } else if (id == R.id.nav_work) {
+            currentCategory = "Pekerjaan";
+        } else if (id == R.id.nav_shopping) {
+            currentCategory = "Belanja";
+        } else if (id == R.id.nav_wishlist) {
+            currentCategory = "Daftar Keinginan";
+        } else if (id == R.id.nav_finished) {
+            currentCategory = "Finished";
+        }
+
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle(item.getTitle());
+        }
+
+        loadData();
+        drawerLayout.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
+    private void loadData() {
+        if (currentCategory.equals("All")) {
+            reminderList = dbHelper.getAllReminder();
+        } else if (currentCategory.equals("Finished")) {
+            reminderList = dbHelper.getReminderByStatus("Complete");
+        } else {
+            reminderList = dbHelper.getReminderByCategory(currentCategory);
+        }
+
+        adapter = new ReminderAdapter(
+                this,
+                reminderList,
+                dbHelper,
+                new ReminderAdapter.OnItemActionListener() {
+                    @Override
+                    public void onEdit(Reminder reminder) {
+                        Intent intent = new Intent(MainActivity.this, AddEditReminderActivity.class);
+                        intent.putExtra("id", reminder.getId());
+                        intent.putExtra("title", reminder.getTitle());
+                        intent.putExtra("description", reminder.getDescription());
+                        intent.putExtra("date", reminder.getDate());
+                        intent.putExtra("time", reminder.getTime());
+                        intent.putExtra("category", reminder.getCategory());
+                        intent.putExtra("repeat", reminder.getRepeatType());
+                        intent.putExtra("status", reminder.getStatus());
+                        startActivityForResult(intent, REQUEST_EDIT);
+                    }
+
+                    @Override
+                    public void onDelete(Reminder reminder) {
+                        dbHelper.deleteReminder(reminder.getId());
+                        loadData();
+                    }
+
+                    @Override
+                    public void onComplete(Reminder reminder) {
+                        dbHelper.updateStatus(reminder.getId(), "Complete");
+                        loadData();
+                    }
+                });
+
+        recyclerView.setAdapter(adapter);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            loadData();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadData();
+    }
+}

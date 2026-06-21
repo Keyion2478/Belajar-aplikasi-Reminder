@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">Aplikasi Pengingat</string>
+    <string name="navigation_drawer_open">Buka menu navigasi</string>
+    <string name="navigation_drawer_close">Tutup menu navigasi</string>
+
+    <!-- Menu Sidebar -->
+    <string name="menu_all">Semua Pengingat</string>
+    <string name="menu_personal">Pribadi</string>
+    <string name="menu_work">Pekerjaan</string>
+    <string name="menu_shopping">Belanja</string>
+    <string name="menu_wishlist">Daftar Keinginan</string>
+    <string name="menu_finished">Selesai</string>
+
+    <!-- Judul & Deskripsi -->
+    <string name="header_title">Pengingat</string>
+    <string name="header_subtitle">Atur tugas harian Anda dengan mudah</string>
+    <string name="add_new_task">Tambah tugas baru</string>
+    <string name="new_reminder">Pengingat Baru</string>
+    <string name="edit_reminder">Edit Pengingat</string>
+
+    <!-- Form Labels -->
+    <string name="hint_title">Judul</string>
+    <string name="hint_description">Deskripsi</string>
+    <string name="hint_date">Tanggal</string>
+    <string name="hint_time">Jam</string>
+    <string name="label_category">Kategori</string>
+    <string name="label_repeat">Tipe Pengulangan</string>
+
+    <!-- Tombol -->
+    <string name="btn_save">SIMPAN PENGINGAT</string>
+    <string name="btn_cancel">BATAL</string>
+    <string name="btn_edit">Edit</string>
+    <string name="btn_delete">Hapus</string>
+    <string name="btn_complete">Selesai</string>
+</resources>
