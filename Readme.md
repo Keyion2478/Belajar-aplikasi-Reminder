@@ -121,7 +121,4 @@ Melalui proyek ini dipelajari:
 - Material Design
 - Mobile Application Development
 
-##  Developer
-
-Abi Bakri
 
